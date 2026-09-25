@@ -63,6 +63,27 @@ export function subStoreTransformPlugin() {
         );
     }
 
+    // 上游 runtime/*.js 用 tryNodeBuiltin(() => require('xxx')) 惰性加载 Node 内置模块，
+    // 在 Workers/Deno 环境下 tryNodeBuiltin 会直接返回 undefined，require 不会执行。
+    // 这里把裸 require('xxx') 替换为 shim，避免 assertNoDangerousRequireResidue 误报。
+    const bareRequireReplacements = [
+        ['fs', 'globalThis.__fs_shim__'],
+        ['path', 'globalThis.__path_shim__'],
+        ['child_process', '({ execFile: () => {} })'],
+        ['stream/promises', 'globalThis.__stream_promises_shim__'],
+    ];
+    function replaceBareRequireInRuntime(contents, id) {
+        if (!id.includes('sub-store/backend/src/runtime/')) return contents;
+        for (const [name, replacement] of bareRequireReplacements) {
+            const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\//g, '\\/');
+            contents = contents.replace(
+                new RegExp(`(?<!['\"\`])\\brequire\\s*\\(\\s*['\"\`]${escaped}['\"\`]\\s*\\)`, 'g'),
+                replacement,
+            );
+        }
+        return contents;
+    }
+
     function assertNoDangerousRequireResidue(contents, id, pluginContext) {
         const matched = dangerousRequirePatterns.find((pattern) => pattern.test(contents));
         if (matched) {
@@ -124,6 +145,8 @@ export default function getParser() {
 
             contents = contents.replace(/const\s+isNode\s*=\s*eval\s*\(\s*`typeof\s+process\s*!==\s*"undefined"`\s*\)/g, 'const isNode = false');
             contents = contents.replace(/const\s+isSurge\s*=\s*typeof\s+\$httpClient\s*!==\s*['"]undefined['"]\s*(?:&&\s*!(?:isLoon|isEgern|isStash|isShadowRocket|isQX)\s*)*;/g, 'const isSurge = true;');
+
+            contents = replaceBareRequireInRuntime(contents, id);
 
             assertNoDangerousRequireResidue(contents, id, this);
 
