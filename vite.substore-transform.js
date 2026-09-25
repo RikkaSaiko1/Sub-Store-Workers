@@ -94,7 +94,9 @@ export function subStoreTransformPlugin() {
     function precompilePeggyParser(contents, id, pluginContext) {
         const match = /const\s+grammars\s*=\s*String\.raw`([\s\S]*?)`;/.exec(contents);
         if (!match) {
-            pluginContext.error(`[sub-store-transform] ${id} Peggy parser 预编译失败：未找到 grammars`);
+            // 上游可能已将某个 parser 从 Peggy 语法重写为手写解析器（不再包含 grammars），
+            // 此时无需预编译，直接跳过即可。
+            return contents;
         }
 
         const parserSource = peggy.generate(match[1], {
