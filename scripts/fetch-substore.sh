@@ -14,7 +14,7 @@ set -euo pipefail
 #   sub-store/backend  <- Sub-Store tag 源码中的 backend/
 
 SUBSTORE_REPO="${SUBSTORE_REPO:-sub-store-org/Sub-Store}"
-SUBSTORE_VERSION="${SUBSTORE_VERSION:-2.39.9}"
+SUBSTORE_VERSION="${SUBSTORE_VERSION:-}"
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 work_dir="${root_dir}/sub-store"
