@@ -66,13 +66,13 @@ jobs:
           httpTimeout: 10000
           log: true
 
+      - name: Run API tests
+        run: node scripts/test-dashboard.js http://localhost:3000
+
       - name: Print Workers dev log on failure
         if: failure()
         run: |
           cat workers-dev.log || true
-
-      - name: Run API tests
-        run: node scripts/test-dashboard.js http://localhost:3000
 
       - name: Stop dev server
         if: always()
@@ -149,13 +149,13 @@ jobs:
           httpTimeout: 10000
           log: true
 
+      - name: Run API tests
+        run: node scripts/test-dashboard.js http://localhost:8000
+
       - name: Print Deno dev log on failure
         if: failure()
         run: |
           cat deno-dev.log || true
-
-      - name: Run API tests
-        run: node scripts/test-dashboard.js http://localhost:8000
 
       - name: Stop Deno server
         if: always()
